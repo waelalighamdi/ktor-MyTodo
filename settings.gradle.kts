@@ -1,0 +1,1 @@
+rootProject.name = "com.wael.ktor-mytodo"
