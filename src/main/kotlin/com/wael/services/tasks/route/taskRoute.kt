@@ -13,20 +13,37 @@ fun Route.tasksRoute() {
     authenticate("basic_auth") {
         route(path = "/task") {
             // the task home message
-            get {
-                call.respondText(
-                    text = "Tasks Route",
-                    status = HttpStatusCode.OK
-                )
-            }
+//            get {
+//                call.respondText(
+//                    text = "Tasks Route",
+//                    status = HttpStatusCode.OK
+//                )
+//            }
             // get tasks for a specific user
-            get(path = "{userId}") {
-                val userId = call.parameters["userId"] ?: return@get call.respondText(
+//            get(path = "{userId}") {
+//                val userId = call.parameters["userId"] ?: return@get call.respondText(
+//                    text = "Missing the User Id",
+//                    status = HttpStatusCode.BadRequest
+//                )
+//
+//                val tasks = tasksRepo.getTasksByUserId(userId = userId)
+//
+//                call.respond(
+//                    message = tasks,
+//                    status = HttpStatusCode.OK
+//                )
+//            }
+//            http://0.0.0.0:8080/task?userId=xxxxx&limit=y&offset=z
+            get {
+                val userId = call.request.queryParameters["userId"] ?: return@get call.respondText(
                     text = "Missing the User Id",
                     status = HttpStatusCode.BadRequest
                 )
 
-                val tasks = tasksRepo.getTasksByUserId(userId = userId)
+                val limit = call.request.queryParameters["limit"]?.toInt() ?: 5
+                val offset = call.request.queryParameters["offset"]?.toInt() ?: 1
+
+                val tasks = tasksRepo.getTasksByUserIdAndPage(userId = userId, limit = limit, offset = offset)
 
                 call.respond(
                     message = tasks,

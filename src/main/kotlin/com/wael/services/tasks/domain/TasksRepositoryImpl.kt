@@ -9,6 +9,14 @@ class TasksRepositoryImpl : TasksRepository {
         return tasksDAO.getTasksByUserId(userId = userId)
     }
 
+    override suspend fun getTasksByUserIdAndPage(userId: String, limit: Int, offset: Int): List<Task> {
+        val tasks = tasksDAO.getTasksByUserId(userId = userId)
+        return if (offset <= tasks.size) {
+            val tasksInPage = tasks.windowed(size = limit, step = offset, partialWindows = true)
+            tasksInPage.first()
+        } else emptyList()
+    }
+
     override suspend fun insertTask(userId: String, title: String, description: String, category: String): Task? {
         val newTask = Task(
             taskId = UUID.randomUUID().toString(),
