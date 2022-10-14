@@ -43,7 +43,7 @@ fun Route.usersRoute() {
 
             if (user != null) {
                 call.respond(
-                    message = user,
+                    message = user.userId,
                     status = HttpStatusCode.OK
                 )
             } else {
