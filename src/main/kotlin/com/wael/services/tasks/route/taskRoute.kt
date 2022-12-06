@@ -5,12 +5,13 @@ import com.wael.services.users.domain.usersRepo
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
+import io.ktor.server.auth.jwt.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 
 fun Route.tasksRoute() {
-    authenticate("basic_auth") {
+    authenticate("jwt_auth") {
         route(path = "/task") {
             // the task home message
 //            get {
@@ -35,10 +36,10 @@ fun Route.tasksRoute() {
 //            }
 //            http://0.0.0.0:8080/task?userId=xxxxx&limit=y&offset=z
             get {
-                val userId = call.request.queryParameters["userId"] ?: return@get call.respondText(
-                    text = "Missing the User Id",
-                    status = HttpStatusCode.BadRequest
-                )
+                val principal = call.principal<JWTPrincipal>()
+                // confirming the userID existence is responsibility of JWT authentication
+                val userId =
+                    principal!!.payload.getClaim("userId").toString().removeSurrounding(prefix = "\"", suffix = "\"")
 
                 val limit = call.request.queryParameters["limit"]?.toInt() ?: 5
                 val offset = call.request.queryParameters["offset"]?.toInt() ?: 1
@@ -55,10 +56,10 @@ fun Route.tasksRoute() {
             post {
                 val taskFormParam = call.receiveParameters()
 
-                val userId = taskFormParam["userId"] ?: return@post call.respondText(
-                    text = "Missing the User Id",
-                    status = HttpStatusCode.BadRequest
-                )
+                val principal = call.principal<JWTPrincipal>()
+                // confirming the userID existence is responsibility of JWT authentication
+                val userId =
+                    principal!!.payload.getClaim("userId").toString().removeSurrounding(prefix = "\"", suffix = "\"")
 
                 // check if the user id is existing in the Database
                 val isUserIdExist = usersRepo.isUserIdExist(userId = userId)

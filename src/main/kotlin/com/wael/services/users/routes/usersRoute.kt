@@ -1,9 +1,12 @@
 package com.wael.services.users.routes
 
+import com.wael.services.users.domain.generateToken
+import com.wael.services.users.domain.userJWTConfig
 import com.wael.services.users.domain.usersRepo
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
+import io.ktor.server.auth.jwt.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -42,8 +45,15 @@ fun Route.usersRoute() {
             val user = usersRepo.insertUser(email = email, password = password)
 
             if (user != null) {
+                val accessToken = generateToken(userId = user.userId, userJWTConfig.ACCESS_TOKEN_LIFETIME)
+                val refreshToken = generateToken(userId = user.userId, userJWTConfig.REFRESH_TOKEN_LIFETIME)
+
                 call.respond(
-                    message = user.userId,
+                    message = hashMapOf(
+                        "userId" to user.userId,
+                        "accessToken" to accessToken,
+                        "refreshToken" to refreshToken
+                    ),
                     status = HttpStatusCode.OK
                 )
             } else {
@@ -55,7 +65,7 @@ fun Route.usersRoute() {
         }
 
         // Login a user
-        authenticate ("basic_auth") {
+        authenticate("basic_auth") {
             post(path = "/login") {
                 // Checking Email is responsibility of Basic Authentication
                 val email = call.principal<UserIdPrincipal>()?.name!!
@@ -65,9 +75,32 @@ fun Route.usersRoute() {
                         text = "the email address $email is not exist!",
                         status = HttpStatusCode.BadRequest
                     )
+                val accessToken = generateToken(userId = user.userId, userJWTConfig.ACCESS_TOKEN_LIFETIME)
+                val refreshToken = generateToken(userId = user.userId, userJWTConfig.REFRESH_TOKEN_LIFETIME)
 
                 call.respond(
-                    message = user.userId,
+                    message = hashMapOf(
+                        "userId" to user.userId,
+                        "accessToken" to accessToken,
+                        "refreshToken" to refreshToken
+                    ),
+                    status = HttpStatusCode.OK
+                )
+            }
+        }
+
+        // generate a new access token
+        authenticate("jwt_auth") {
+            get(path = "/refresh") {
+                val principal = call.principal<JWTPrincipal>()
+                // confirming the userID existence is responsibility of JWT authentication
+                val userId =
+                    principal!!.payload.getClaim("userId").toString().removeSurrounding(prefix = "\"", suffix = "\"")
+
+                val accessToken = generateToken(userId = userId, userJWTConfig.ACCESS_TOKEN_LIFETIME)
+
+                call.respond(
+                    message = hashMapOf("accessToken" to accessToken),
                     status = HttpStatusCode.OK
                 )
             }
