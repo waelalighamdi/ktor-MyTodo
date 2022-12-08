@@ -39,7 +39,7 @@ fun Route.tasksRoute() {
                 val principal = call.principal<JWTPrincipal>()
                 // confirming the userID existence is responsibility of JWT authentication
                 val userId =
-                    principal!!.payload.getClaim("userId").toString().removeSurrounding(prefix = "\"", suffix = "\"")
+                    principal!!.payload.getClaim("userId").asString()
 
                 val limit = call.request.queryParameters["limit"]?.toInt() ?: 5
                 val offset = call.request.queryParameters["offset"]?.toInt() ?: 1
@@ -59,7 +59,7 @@ fun Route.tasksRoute() {
                 val principal = call.principal<JWTPrincipal>()
                 // confirming the userID existence is responsibility of JWT authentication
                 val userId =
-                    principal!!.payload.getClaim("userId").toString().removeSurrounding(prefix = "\"", suffix = "\"")
+                    principal!!.payload.getClaim("userId").asString()
 
                 // check if the user id is existing in the Database
                 val isUserIdExist = usersRepo.isUserIdExist(userId = userId)

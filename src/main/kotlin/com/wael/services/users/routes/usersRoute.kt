@@ -95,7 +95,7 @@ fun Route.usersRoute() {
                 val principal = call.principal<JWTPrincipal>()
                 // confirming the userID existence is responsibility of JWT authentication
                 val userId =
-                    principal!!.payload.getClaim("userId").toString().removeSurrounding(prefix = "\"", suffix = "\"")
+                    principal!!.payload.getClaim("userId").asString()
 
                 val accessToken = generateToken(userId = userId, userJWTConfig.ACCESS_TOKEN_LIFETIME)
 
